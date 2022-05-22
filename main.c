@@ -378,7 +378,6 @@ void searchBookByTitle(TreeMap * bookCase)
         printf("No hay ningun libro aun.\n");
         return;
     }
-    Book * book = pairTree->value;
     char bookTitle[100];
     printf("Ingrese el titulo del libro a buscar:\n");
     getchar();
@@ -386,58 +385,69 @@ void searchBookByTitle(TreeMap * bookCase)
     stringToLower(bookTitle);
 
     //dividir titulo en un arreglo de palabras
-    char wantedTitle[100][1024];
-    int nWords = 0;
     char division[2] = " ";
-    char * auxString;
+
+    char wantedTitle[100][1024];
+    int nWordsRequired = 0;
+    char * auxString1;
+    auxString1 = strtok(bookTitle, division);
     printf("Imprimiendo titulo buscado por partes\n");
-    auxString = wantedTitle[nWords];
-    auxString = strtok(bookTitle, division);
-    while(auxString != NULL)
+    while(auxString1 != NULL)
     {
-        printf("%s\n" ,auxString);
-        nWords++;
-        auxString = wantedTitle[nWords];
-        auxString = strtok(NULL, division);
+        printf("%s\n" ,auxString1);
+        strcpy(wantedTitle[nWordsRequired], auxString1);
+        nWordsRequired++;
+        auxString1 = strtok(NULL, division);
     }
 
-    int required = nWords;
-    printf("nwords of the title = [%i]\n", required);
-    while(book != NULL)
+    printf("nwords of the title = [%i]\n", nWordsRequired);
+    while(pairTree != NULL)
     {
-        //con un for, comparar cada palabra con cada palabra del titulo
+        printf("Revisando libro\n");
+        Book * book = pairTree->value;
+
+        //Dividiendo titulo del libro actual
         char currentTitle[100][1024];
-        int i = 0;
-        char * auxString;
+        int nWordsTitle = 0;
+        char * auxString2 = malloc(100);
+        strcpy(auxString2, book->title);
+        auxString2 = strtok(auxString2, division);
         printf("Imprimiendo titulo actual por partes\n");
-        auxString = currentTitle[i];
-        auxString = strtok(book->title, division);
-        while(auxString != NULL)
+        while(auxString2 != NULL)
         {
-            printf("%s\n" ,auxString);
-            i++;
-            auxString = currentTitle[i];
-            auxString = strtok(NULL, division);
-        }
-        for(int i = 0; i < required ; i++)
-        {
-            
+            printf("%s\n" ,auxString2);
+            strcpy(currentTitle[nWordsTitle], auxString2);
+            nWordsTitle++;
+            auxString2 = strtok(NULL, division);
         }
         //se nececita un contador y la cantidad de palabras del titulo
-        //si la palabra está en el titulo, se incrementa el contador
-        //cuando el contador llegue a la cantidad del titulo, se muestra el libro
-        if(strcmp(bookTitle, book->title) == 0)
+        printf("Num of words of title = [%i]\n", nWordsTitle);
+
+        //con un for, comparar cada palabra con cada palabra del titulo
+        int matches = 0;
+        int x,y;
+        for(x = 0; x < nWordsRequired ; x++)
         {
-            printf("%s\n", bookTitle);
+            for(y = 0 ; y < nWordsTitle ; y++)
+            {
+                printf("\nComparing [%s]\nwith      [%s]\n", wantedTitle[x], currentTitle[y]);
+                //si la palabra está en el titulo, se incrementa el contador
+                if(strcmp(wantedTitle[x], currentTitle[y]) == 0)
+                {
+                    printf("Match!\n");
+                    matches++;
+                }
+            }
         }
+        
+        //Si el contador llegua a la cantidad del titulo, se muestra el libro
+        if(matches >= nWordsRequired)
+        {
+            printf("\nLibro encontrado = [%s]\n", book->title);
+        }
+
         //se pasa al siguiente libro
-        pairTree = firstTreeMap(bookCase);
-        if(pairTree == NULL)
-        {
-            printf("No se ha encontrado ningun libro\n");
-            return;
-        }
-        book = pairTree->value;
+        pairTree = nextTreeMap(bookCase);
     }
 }
 
