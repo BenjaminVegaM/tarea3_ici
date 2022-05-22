@@ -1,6 +1,7 @@
 {
     "files.associations": {
-        "map": "c"
+        "map": "c",
+        "system_error": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

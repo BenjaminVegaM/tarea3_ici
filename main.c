@@ -17,7 +17,7 @@ typedef struct
 
 typedef struct
 {
-    char * word;
+    char word[1024];
     int count;
     List * positions; //Data = char * position, works with a function to read the .txt
 } NodeWF; //Node of Map * Words Frecuency
@@ -56,6 +56,7 @@ int lower_than_string(void* key1, void* key2){
     return 0;
 }
 
+//Funcion que requiere presionar enter para proseguir, sirve para generar una pausa.
 void pressEnterToContinue()
 {
     printf("\n(Presiona Enter para continuar.)\n");
@@ -79,17 +80,17 @@ void cleanWord(char * word)
     int i = 0;
     int k;
     int j = 0;
-    printf("Checking [%s]\n", word);
+    //printf("Checking [%s]\n", word);
     while(word[i] != '\0')
     {
-        printf("Checking [%i] = %c\n", i, word[i]);
+        //printf("Checking [%i] = %c\n", i, word[i]);
         if(isalpha(word[i]) == 0)
         {
-            printf("Is not alpha\n");
+            //printf("Is not alpha\n");
             k = i;
             while(word[k+1] != '\0')
             {
-                printf("Replacing %c with %c\n", word[k], word[k+1]);
+                //printf("Replacing %c with %c\n", word[k], word[k+1]);
                 word[k] = word[k+1];
                 k++;
             }
@@ -100,30 +101,72 @@ void cleanWord(char * word)
     }
 }
 
+//Funcion que limipia y convierte a minuscula una palabra
 void lowerAndClean(char * word)
 {
     cleanWord(word);
     stringToLower(word);
 }
 
-//Lee la siguiente palabra
+//Lee la siguiente palabra del archivo
+/*
 char * next_word (FILE *f) {
     char x[1024];
-    /* assumes no word exceeds length of 1023 */
+    //assumes no word exceeds length of 1023
     if (fscanf(f, " %1023s", x) == 1)
         return strdup(x);
     else
         return NULL;
 }
+*/
 
+//Asigna el id al nombre del archivo para incluirle la ruta de la carpeta y el txt
 char * assignFileName(char * id, char * fileName)
 {
-    printf("ID = %s\n", &id);
     strcat(fileName, id);
-    strcat(fileName, ".txt");
+    strcat(id, ".txt");
     return fileName;
 }
 
+//Se salta la informacion del projecto y extrae el titulo del archivo (primera linea hasta \n), y retorna un string
+char * getTitle(FILE * file)
+{
+    printf("Reservando memoria para title\n");
+    char * title = malloc(300);
+    char c;
+    char s[1024];
+    int i,j;
+    size_t n = 0;
+
+    printf("Saltandose las siguientes lineas:\n");
+    for(i = 0 ; i < 11 ; i++)
+    {
+        fgets(s, strlen(s), file);
+        printf("[%s]\n",s);
+    }
+    j = 0;
+    while ((c = fgetc(file)) != '\n')
+    {
+        j++;
+        if(j > 7)
+        {
+            printf("c = [%c]\n", c);
+            title[n] = c;
+            n++;
+        }
+    }
+    title[n] = '\0';
+    printf("title = [%s]\n", title);
+    return title;
+}
+
+char * skipToContent(FILE * file)
+{
+    char * title = getTitle(file);
+    return title;
+}
+
+//Crea un tipo Book y le asigna los valores de ID y el título, e inicializa el TreeMap
 Book * createBook1(char * id, char * title)
 {
     Book * newBook = (Book *) malloc (sizeof(Book));
@@ -134,7 +177,7 @@ Book * createBook1(char * id, char * title)
     printf("Asignando id a book->id\n");
     strcpy(newBook->id, id);
 
-    printf("Asignando Placeholder Title\n");
+    printf("Asignando Title\n");
     strcpy(newBook->title, title);
 
     newBook->uniqueWords=0;
@@ -142,21 +185,24 @@ Book * createBook1(char * id, char * title)
     return newBook;
 }
 
-Book * createBook2(FILE * file, int wordCount)
+//Asigna la ultima posicion como el numero de characteres y el valor del numero de palabras
+void createBook2(FILE * file, Book * book, int wordCount)
 {
-    Book * book = (Book *) malloc (sizeof(Book));
     book->charCount = ftell(file);
     book->wordCount = wordCount;
 }
 
+//Inicializa un tipo Position * y le asigna el valor de la posición de la palabra en el archivo
 Position * getPos(FILE * file)
 {
     Position * pos = (Position *) malloc (sizeof(Position));
     pos->position = ftell(file);
-    printf("pos = [%i]\n", pos->position);
+    //printf("pos = [%i]\n", pos->position);
     return pos;
 }
 
+//Inicializa un NodeWF, inicializa su lista, le copia el string palabra e inicializa el cont a 1
+//Ademas inserta la posicion en la lista del nodo
 NodeWF * createNodeWF(char * word, Position * pos, Book * book)
 {
     NodeWF * auxWord = (NodeWF *) malloc (sizeof(NodeWF));
@@ -168,6 +214,7 @@ NodeWF * createNodeWF(char * word, Position * pos, Book * book)
     if(auxWord->positions == NULL)
     {
         printf("No se pudo crear la Lista.\n");
+        return NULL;
     }
     else
     {
@@ -192,10 +239,13 @@ NodeWF * createNodeWF(char * word, Position * pos, Book * book)
         printf("Palabra insertada\n");
 
         printf("Palabra %s creada con cantidad %i\n", auxWord->word, auxWord->count);
+        
+        return auxWord;
     }
 }
 
-void * showCurrentWords(List * positions)
+//Muestra las posiciones actuales desde la lista de una palabra (NodeWF)
+void * showCurrentPositions(List * positions)
 {
     printf("\nImprimiendo posiciones actuales en la lista\n");
     Position * auxPos = firstList(positions);
@@ -206,112 +256,124 @@ void * showCurrentWords(List * positions)
     }
 }
 
-NodeWF * foundWord(NodeWF * auxWord, Position * pos)
+//En caso de que la palabra ya exista en el mapa, le aumenta el count, le asigna la nueva posicion y la guarda en la lista
+void foundWord(NodeWF * auxWord, Position * pos)
 {
-    printf("PALABRA ENCONTRADA, aumentando cantidad\n");
+    //printf("PALABRA ENCONTRADA, aumentando cantidad\n");
     auxWord->count++;
-    printf("Cantidad = %i\n", auxWord->count);
+    //printf("Cantidad = %i\n", auxWord->count);
 
-    printf("Position = %i\n", pos->position);
-    printf("PositionPointer Value = %i\n", &pos->position);
+    //printf("Position = %i\n", pos->position);
+    //printf("PositionPointer Value = %i\n", &pos->position);
 
-    printf("Insertando a la lista\n");
+    //printf("Insertando a la lista\n");
     pushBack(auxWord->positions, pos);
-    printf("Posicion insertada\n");
+    //printf("Posicion insertada\n");
 
-    showCurrentWords(auxWord->positions);
-    
+    //showCurrentPositions(auxWord->positions);
 }
 
+//Funcion principal de cargar los .txt
 void loadBooks(TreeMap * bookCase)
 {
     printf("Ingrese el ID de los archivos que desea importar\nINGRESE 'end' PARA DETENERSE:\n");
-    char fileName[] = "./books/";
-    char id[15];
-    char title[] = "Placeholder Title";
+    char auxID[15];
+    char id[15] = "";
     getchar();
-    gets(id);
-    while(is_equal_string(id, "end") == 0)
+    do
     {
+        char fileName[] = "./books/";
+        gets(id);
+        strcpy(auxID, id);
+        printf("ID = %s\n", auxID);
         //De aqui hasta el siguiente comentario es solo para adaptar el nombre del archivo y abrirlo
         strcpy(fileName, assignFileName(id, fileName));
+        printf("fileName = %s\n", fileName);
 
-        printf("Leyendo archivo: %s.txt\n", id);
+        printf("ID = %s\n", auxID);
+        
+        printf("Leyendo archivo: %s.txt\n", auxID);
         FILE * file = fopen(fileName, "r");
         if(file == NULL)
         {
-            printf("Archivo no encontrado.\n");
-            return;
+            printf("Archivo no encontrado. Ingrese el ID nuevamente.\n");
+            continue;
         }
-        //Hasta aqui
+        //----------------Hasta aqui-----------------
 
-        printf("Creando Book * book\n");
-        Book * book = createBook1(id, title);
+        char * title = skipToContent(file);
+        //printf("Title = [%s]\n", title);
 
-        printf("Adquiriendo posicion actual\n");
+        //printf("Creando Book * book\n");
+        Book * book = createBook1(auxID, title);
+
+        //printf("Adquiriendo posicion actual\n");
         Position * pos = getPos(file);
-
-        printf("Leyendo siguiente palabra\n");
-        char * word = next_word(file);
-
-        printf("Estableciendo contador de palabras en 0\n");
+    
+        //printf("Estableciendo contador de palabras en 0\n");
         int wordCount = 0;
 
-        while(word)
+        char word[300]="";
+
+        //printf("Leyendo primera palabra\n");
+        while(fscanf(file, " %1023s", word) != EOF)
         {
             wordCount++;
-            printf("Palabra numero [%i]\n", wordCount);
+            //printf("Palabra numero [%i]\n", wordCount);
 
-            printf("Limpiando palabra y pasando a minuscula\n");
+            //printf("Limpiando palabra y pasando a minuscula\n");
             lowerAndClean(word);
+
+            //printf("Word = [%s]\n", word);
 
             NodeWF * auxWord;
 
-            printf("\nBuscando si la palabra [%s] ya existe\n", word);
+            //printf("\nBuscando si la palabra [%s] ya existe\n", word);
             PairTree * auxPair = searchTreeMap(book->wordsFrecuency, word);
-            printf("Despues de PairTree *\n");
+            //printf("Despues de PairTree *\n");
 
             if(auxPair == NULL)
             {
-                printf("Palabra no encontrada, creando NodeWF *\n");
+                //printf("Palabra no encontrada, creando NodeWF *\n");
 
                 auxWord = createNodeWF(word, pos, book);
                 book->uniqueWords++;
+                //printf("book->uniqueWords = [%i]\n", book->uniqueWords);
             }
             else
             {
-                auxWord = foundWord(auxPair->value, pos);
+                //printf("Palabra encontrada\n");
+                foundWord(auxPair->value, pos);
             }
+            
+            //printf("\n----------Siguiente palabra del archivo----------\n");
 
-            printf("Leyendo posicion de la siguiente palabra\n");
+            //printf("Leyendo posicion de la siguiente palabra\n");
             pos = getPos(file);
-
-            printf("\nLeyendo siguiente palabra\n");
-            word = next_word(file);
-
-            if(word == NULL)
-            {
-                printf("No hay mas palabras.\n");
-                break;
-            }
-            printf("\n----------Siguiente palabra del archivo----------\n");
         }
-        book = createBook2(file, wordCount);
+        createBook2(file, book, wordCount);
 
         printf("Ultima posicion = [%i]\n", book->charCount);
 
         printf("Insertando en el TreeMap\n");
         insertTreeMap(bookCase, book->id, book);
 
-        //fclose(file);
+        printf("Cerrando archivo\n");
+        if(fclose(file) == 0)
+        {
+        printf("Archivo cerrado\n");
+        }
+        else
+        {
+            printf("El archivo no se pudo cerrar\n");
+        }
 
         printf("Ingrese el ID del siguiente archivo (o 'end' para detenerse).\n");
-        char fileName[] = "./books/";
-        gets(id);
-    }
+    }while(is_equal_string(auxID, "end") == 0);
     printf("Finalizando de leer, volviendo al menu.\n");
 }
 
+//Divide el titulo en diferentes strings
 void divideTitle(char * bookTitle, char ** title)
 {
     int i = 0;
@@ -399,26 +461,21 @@ void showSortedBooks(TreeMap * bookCase)
     }
 }
 
-void showWordsWithMostFrecuency(TreeMap * bookCase)
+void showTop10Words(TreeMap * bookCase)
 {
     PairTree * auxP = firstTreeMap(bookCase);
     if(auxP == NULL)
     {
-        printf("No hay libros aún.\n");
+        printf("No hay libros aun.\n");
         return;
     }
-    char id[15];
-    printf("Ingrese el id del libro que desea revisar.\n");
+    char title[150];
+    printf("Ingrese el titulo del libro que desea revisar.\n");
     getchar();
-    gets(id);
+    gets(title);
 
-    printf("Buscando el libro de id = [%s]\n", id);
-    auxP = searchTreeMap(bookCase, id);
-    if(auxP == NULL)
-    {
-        printf("No se ha encontrado ese libro\n");
-        return;
-    }
+    printf("Buscando el libro [%s]\n", title);
+    searchBookByTitle(bookCase);
     Book * book = auxP->value;
     printf("Revisando si hay palabras\n");
     auxP = firstTreeMap(book->wordsFrecuency);
@@ -502,10 +559,10 @@ int main()
             }
             case 3:
             {
-                searchBookByTitle(bookCase);
                 /*Buscar un libro por título. El usuario coloca algunas palabras
                 separadas por espacio y la aplicación muestra los títulos de
                 libros que contienen todas las palabras.*/
+                searchBookByTitle(bookCase);
                 break;
             }
             case 4:
@@ -516,7 +573,6 @@ int main()
                 cada una de ellas). (La frecuencia se calcula como la cantidad
                 de veces que aparece una palabra dividida por el total de
                 palabras en el libro.)*/
-                showWordsWithMostFrecuency(bookCase);
                 break;
             }
             case 5:
@@ -524,6 +580,7 @@ int main()
                 /*Palabras más relevantes.  El usuario ingresa el ***TÍTULO*** de un
                 libro y la aplicación muestra las 10 palabras más relevantes
                 de este.*/
+                showTop10Words(bookCase);
                 break;
             }
             case 6:
@@ -540,7 +597,7 @@ int main()
             case 7:
             {
                 /*Mostrar palabra en su contexto dentro del libro. El usuario
-                ingresa el título de un libro y el de una palabra a buscar. La
+                ingresa el título de un libro y una palabra a buscar. La
                 aplicación muestra las distintas apariciones de la palabra en
                 el contexto del documento, es decir, para cada aparición, se
                 muestran algunas palabras hacia atrás y hacia adelante de la
