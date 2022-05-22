@@ -3,7 +3,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "list.h"
-#include "hashmap.h"
 #include "treemap.h"
 
 typedef struct
@@ -11,7 +10,8 @@ typedef struct
     char title[100];
     int charCount;
     int wordCount;
-    HashMap * wordsFrecuency;
+    int uniqueWords;
+    TreeMap * wordsFrecuency;
     char id[15];
 } Book;
 
@@ -129,13 +129,15 @@ Book * createBook1(char * id, char * title)
     Book * newBook = (Book *) malloc (sizeof(Book));
 
     printf("Creando Map book->wordsFrecuency\n");
-    newBook->wordsFrecuency = createMap(2);
+    newBook->wordsFrecuency = createTreeMap(lower_than_string);
 
     printf("Asignando id a book->id\n");
     strcpy(newBook->id, id);
 
     printf("Asignando Placeholder Title\n");
     strcpy(newBook->title, title);
+
+    newBook->uniqueWords=0;
 
     return newBook;
 }
@@ -186,7 +188,7 @@ NodeWF * createNodeWF(char * word, Position * pos, Book * book)
         printf("Posicion insertada\n");
 
         printf("Insertando palabra al mapa\n");
-        insertMap(book->wordsFrecuency, word, auxWord);
+        insertTreeMap(book->wordsFrecuency, word, auxWord);
         printf("Palabra insertada\n");
 
         printf("Palabra %s creada con cantidad %i\n", auxWord->word, auxWord->count);
@@ -266,14 +268,15 @@ void loadBooks(TreeMap * bookCase)
             NodeWF * auxWord;
 
             printf("\nBuscando si la palabra [%s] ya existe\n", word);
-            Pair * auxPair = searchMap(book->wordsFrecuency, word);
-            printf("Despues de Pair *\n");
+            PairTree * auxPair = searchTreeMap(book->wordsFrecuency, word);
+            printf("Despues de PairTree *\n");
 
             if(auxPair == NULL)
             {
                 printf("Palabra no encontrada, creando NodeWF *\n");
 
                 auxWord = createNodeWF(word, pos, book);
+                book->uniqueWords++;
             }
             else
             {
@@ -396,7 +399,7 @@ void showSortedBooks(TreeMap * bookCase)
     }
 }
 
-showWordsWithMostFrecuency(TreeMap * bookCase)
+void showWordsWithMostFrecuency(TreeMap * bookCase)
 {
     PairTree * auxP = firstTreeMap(bookCase);
     if(auxP == NULL)
@@ -404,13 +407,55 @@ showWordsWithMostFrecuency(TreeMap * bookCase)
         printf("No hay libros aún.\n");
         return;
     }
-    printf("Ingrese el id del libro que desea revisar.\n");
-    char fileName[] = "./books/";
     char id[15];
-    char title[] = "Placeholder Title";
+    printf("Ingrese el id del libro que desea revisar.\n");
     getchar();
     gets(id);
-strcpy(fileName, assignFileName(id, fileName));
+
+    printf("Buscando el libro de id = [%s]\n", id);
+    auxP = searchTreeMap(bookCase, id);
+    if(auxP == NULL)
+    {
+        printf("No se ha encontrado ese libro\n");
+        return;
+    }
+    Book * book = auxP->value;
+    printf("Revisando si hay palabras\n");
+    auxP = firstTreeMap(book->wordsFrecuency);
+    if(auxP == NULL)
+    {
+        printf("Ocurrio un error al intentar conseguir las palabras.\n");
+        return;
+    }
+    NodeWF * actualWord;
+    int i,j,k;
+    printf("uniqueWords = [%i]\n", book->uniqueWords);
+    printf("Mostrando las 10 palabras:\n");
+    for(i = 0 ; i < 10 ; i++)
+    {
+        printf("Palabra [%i]\n", i+1);
+        for(j = 0 ; j < book->uniqueWords ; j++)
+        {
+            printf("j = [%i]\n", j);
+            k = book->uniqueWords-j;
+            printf("k = [%i]\n", k);
+            while(k > 0)
+            {
+                printf("Buscando la palabra en posicion [%i]\n", k);
+                auxP = nextTreeMap(book->wordsFrecuency);
+                if(auxP == NULL)
+                {
+                    printf("Ocurrio un error al intentar conseguir la palabra\n");
+                    return;
+                }
+                k--;
+            }
+            actualWord = auxP->value;
+            printf("Word = [%s]\nAmmount = [%i]\n", actualWord->word, actualWord->count);
+            auxP = nextTreeMap(book->wordsFrecuency);
+        }
+        auxP = firstTreeMap(book->wordsFrecuency);
+    }
 }
 
 int main()
