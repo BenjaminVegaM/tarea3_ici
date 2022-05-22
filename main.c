@@ -131,32 +131,40 @@ char * assignFileName(char * id, char * fileName)
 //Se salta la informacion del projecto y extrae el titulo del archivo (primera linea hasta \n), y retorna un string
 char * getTitle(FILE * file)
 {
-    printf("Reservando memoria para title\n");
+    //Reservar memoria para title
     char * title = malloc(300);
     char c;
     char s[1024];
     int i,j;
     size_t n = 0;
 
-    printf("Saltandose las siguientes lineas:\n");
-    for(i = 0 ; i < 11 ; i++)
+    //Saltarse las lineas inecesarias
+    for(i = 0 ; i < 10 ; i++)
     {
-        fgets(s, strlen(s), file);
-        printf("[%s]\n",s);
+        fgets(s, 1024, file);
     }
+
     j = 0;
     while ((c = fgetc(file)) != '\n')
     {
         j++;
         if(j > 7)
         {
-            printf("c = [%c]\n", c);
+            //printf("c = [%c]\n", c);
             title[n] = c;
             n++;
         }
     }
+
     title[n] = '\0';
     printf("title = [%s]\n", title);
+
+    //Saltarse el resto hasta el contenido importante
+    for(i = 0 ; i < 11 ; i++)
+    {
+        fgets(s, 1024, file);
+    }
+
     return title;
 }
 
