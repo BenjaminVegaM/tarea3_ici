@@ -264,7 +264,7 @@ void foundWord(NodeWF * auxWord, Position * pos)
 }
 
 //Funcion principal de cargar los .txt
-void loadBooks(TreeMap * bookCase, int ammountOfDocs)
+int loadBooks(TreeMap * bookCase, int ammountOfDocs)
 {
     printf("-----<Ingrese el ID del archivo que desea importar o 'end' para detenerse>-----\n");
     char auxID[15];
@@ -584,7 +584,7 @@ void showTop10Words(TreeMap * bookCase)
 }
 
 void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
-{
+{/*
     PairTree * auxP = firstTreeMap(bookCase);
     if(auxP == NULL)
     {
@@ -653,7 +653,7 @@ void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
         float docs = ammountOfDocs;
         float relevancy = frecuencia*log(1);
         printf("> Palabra = [%s]\n  Relevancia = [%f]\n\n", actualWord->word, relevancy);
-    }
+    }*/
 }
 
 int main()
