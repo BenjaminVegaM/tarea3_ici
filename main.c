@@ -463,6 +463,43 @@ void searchBookByTitle(TreeMap * bookCase)
     }
 }
 
+void searchBooksByWord(TreeMap * bookCase)
+{
+    PairTree * auxPTCase = firstTreeMap(bookCase);
+    if(auxPTCase == NULL)
+    {
+        printf("No hay ningun libro aun.\n");
+        return;
+    }
+    char requestedWord[100];
+    printf("Ingrese la palabra a buscar:\n");
+    getchar();
+    gets(requestedWord);
+    lowerAndClean(requestedWord);
+
+    printf("Mostrando los libros que coinciden con la busqueda:\n");
+    Book * book;
+    NodeWF * currentWord;
+    while(auxPTCase != NULL)
+    {
+        //printf("Revisando libro\n");
+        book = auxPTCase->value;
+        PairTree * auxPTBook = searchTreeMap(book->wordsFrecuency, requestedWord);
+        if(auxPTBook != NULL)
+        {
+            currentWord = auxPTBook->value;
+            printf("Titulo: [%s]\nID: [%s]\n\n", book->title, book->id);   
+        }
+        /*else
+        {
+            printf("Palabra no encontrada en este libro\n");
+        }*/
+
+        //se pasa al siguiente libro
+        auxPTCase = nextTreeMap(bookCase);
+    }
+}
+
 void showSortedBooks(TreeMap * bookCase)
 {
     printf("Searching for the first book\n");
@@ -476,7 +513,7 @@ void showSortedBooks(TreeMap * bookCase)
 
     Book * currentBook;
 
-    printf("Mostrando todos los libros.");
+    printf("Mostrando todos los libros.\n");
     while(auxP)
     {
         currentBook = auxP->value;
@@ -486,7 +523,7 @@ void showSortedBooks(TreeMap * bookCase)
         printf("Cantidad de palabras en el contenido: %i\n", currentBook->wordCount);
         auxP = nextTreeMap(bookCase);
     }
-    printf("fin.\n");
+    printf("--------------------Listo--------------------\n");
 }
 
 Book * searchOneBookByTitle(TreeMap * bookCase, char * title)
@@ -515,18 +552,21 @@ void showTop10Words(TreeMap * bookCase)
         printf("No hay libros aun.\n");
         return;
     }
-    char title[150];
+    char id[15];
 
-    Book * book = NULL;
+    Book * book;
     getchar();
-    while(book == NULL)
+    
+    do
     {
+        book = auxP->value;
         printf("Ingrese el titulo del libro que desea revisar.\n");
-        gets(title);
+        gets(id);
 
-        printf("Buscando el libro [%s]\n", title);
-        book = searchOneBookByTitle(bookCase, title);
-    }
+        printf("Buscando el libro de ID: [%s]\n", id);
+        auxP = searchTreeMap(bookCase, id);
+    } while(auxP == NULL);
+
     //printf("Revisando si hay palabras\n");
     auxP = firstTreeMap(book->wordsFrecuency);
     NodeWF * actualWord;
@@ -736,6 +776,7 @@ int main()
                 Por ejemplo, si busco “Jesús”, la biblia debería aparecer en
                 primer lugar. Si busco “mancha”, el Quijote debería salir en
                 primer lugar.*/
+                searchBooksByWord(bookCase);
                 break;
             }
             case 7:
