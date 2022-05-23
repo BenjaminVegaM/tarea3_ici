@@ -233,7 +233,7 @@ NodeWF * createNodeWF(char * word, Position * pos, Book * book)
         //printf("Posicion insertada en la lista.\n");
 
         //printf("Insertando palabra al mapa\n");
-        insertTreeMap(book->wordsFrecuency, (int *)word, auxWord);
+        insertTreeMap(book->wordsFrecuency, word, auxWord);
         printf("Palabra [%s] insertada en el mapa\n", auxWord->word);
 
         //printf("\nPalabra %s creada\n", auxWord->word);
@@ -311,14 +311,16 @@ void loadBooks(TreeMap * bookCase)
         //printf("Estableciendo contador de palabras en 0\n");
         int wordCount = 0;
 
-        char word[300]="";
-
+        char * word;
+        char scannedWord[300]="";
         printf("Porfavor espere a que carguen las palabras...\n");
-        while(fscanf(file, " %1023s", word) != EOF)
+
+        while(fscanf(file, " %1023s", scannedWord) != EOF)
         {
             wordCount++;
             //printf("Palabra numero [%i]\n", wordCount);
 
+            word = strdup(scannedWord);
             //printf("Limpiando palabra y pasando a minuscula\n");
             lowerAndClean(word);
 
@@ -544,7 +546,7 @@ void showTop10Words(TreeMap * bookCase)
         return;
     }
     int h,i,j,k;
-    //printf("uniqueWords = [%i]\n", book->uniqueWords);
+    printf("uniqueWords = [%i]\n", book->uniqueWords);
     if(book->uniqueWords < 10)
     {
         h = book->uniqueWords;
@@ -554,35 +556,37 @@ void showTop10Words(TreeMap * bookCase)
         h = 10;
     }
     printf("Mostrando las %i palabras:\n", h);
+    //Para la posicion [i]
     for(i = 0 ; i < h ; i++)
     {
-        printf("Palabra [%i]\n", i+1);
+        printf("Palabra en %i lugar.\n", i+1);
+        //Recorrer todas las palabras
         for(j = 1 ; j <= book->uniqueWords ; j++)
         {
             printf("j = [%i]\n", j);
             k = book->uniqueWords-j;
             printf("k = [%i]\n", k);
+
+            //printf("Buscando la palabra en posicion [%i]\n", k);
+            
             auxP = firstTreeMap(book->wordsFrecuency);
-            if(auxP != NULL)
-            {
-                actualWord = auxP->value;
-                printf("Actual word = [%s]\n", actualWord->word);
-            }
             while(k > 0)
             {
-                printf("Buscando la palabra en posicion [%i]\n", k);
                 auxP = nextTreeMap(book->wordsFrecuency);
                 if(auxP == NULL)
                 {
                     printf("Ocurrio un error al intentar conseguir la palabra\n");
-                    break;
+                    return;
                 }
+                actualWord = auxP->value;
+                printf("Word = [%s]\nAmmount = [%i]\n", actualWord->word, actualWord->count);
+
                 k--;
             }
-            actualWord = auxP->value;
-            printf("Word = [%s]\nAmmount = [%i]\n", actualWord->word, actualWord->count);
             auxP = nextTreeMap(book->wordsFrecuency);
         }
+        actualWord = auxP->value;
+        printf(">>> Palabra = [%s]\n    Veces = [%i]\n", actualWord->word, actualWord->count);
     }
 }
 
