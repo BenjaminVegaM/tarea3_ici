@@ -122,15 +122,8 @@ char * getTitle(FILE * file)
     //Reservar memoria para title
     char * title = malloc(300);
     char c;
-    char s[1024];
-    int i,j;
+    int j;
     size_t n = 0;
-
-    //Saltarse las lineas inecesarias
-    for(i = 0 ; i < 10 ; i++)
-    {
-        fgets(s, 1024, file);
-    }
 
     j = 0;
     while ((c = fgetc(file)) != '\n')
@@ -147,18 +140,27 @@ char * getTitle(FILE * file)
     title[n] = '\0';
     //printf("title = [%s]\n", title);
 
-    //Saltarse el resto hasta el contenido importante
-    for(i = 0 ; i < 11 ; i++)
-    {
-        fgets(s, 1024, file);
-    }
-
     return title;
 }
 
 char * skipToContent(FILE * file)
 {
+    int i;
+    char s[1024];
+    //Saltarse las lineas inecesarias
+    for(i = 0 ; i < 10 ; i++)
+    {
+        fgets(s, 1024, file);
+    }
+
+    //Obtener el Titulo
     char * title = getTitle(file);
+
+    //Saltarse el resto hasta el contenido importante
+    for(i = 0 ; i < 13 ; i++)
+    {
+        fgets(s, 1024, file);
+    }
     return title;
 }
 
@@ -167,13 +169,13 @@ Book * createBook1(char * id, char * title)
 {
     Book * newBook = (Book *) malloc (sizeof(Book));
 
-    printf("Creando Map book->wordsFrecuency\n");
+    //printf("Creando Map book->wordsFrecuency\n");
     newBook->wordsFrecuency = createTreeMap(lower_than_string);
 
-    printf("Asignando id a book->id\n");
+    //printf("Asignando id a book->id\n");
     strcpy(newBook->id, id);
 
-    printf("Asignando Title\n");
+    //printf("Asignando Title\n");
     strcpy(newBook->title, title);
 
     newBook->uniqueWords=0;
@@ -231,8 +233,8 @@ NodeWF * createNodeWF(char * word, Position * pos, Book * book)
         //printf("Posicion insertada en la lista.\n");
 
         //printf("Insertando palabra al mapa\n");
-        insertTreeMap(book->wordsFrecuency, word, auxWord);
-        //printf("Palabra insertada en el mapa\n");
+        insertTreeMap(book->wordsFrecuency, (int *)word, auxWord);
+        printf("Palabra [%s] insertada en el mapa\n", auxWord->word);
 
         //printf("\nPalabra %s creada\n", auxWord->word);
         
@@ -272,7 +274,7 @@ void foundWord(NodeWF * auxWord, Position * pos)
 //Funcion principal de cargar los .txt
 void loadBooks(TreeMap * bookCase)
 {
-    printf("Ingrese el ID de los archivos que desea importar\nINGRESE 'end' PARA DETENERSE:\n");
+    printf("-----<Ingrese el ID del archivo que desea importar o 'end' para detenerse>-----\n");
     char auxID[15];
     char id[15] = "";
     getchar();
@@ -281,12 +283,12 @@ void loadBooks(TreeMap * bookCase)
         char fileName[] = "./books/";
         gets(id);
         strcpy(auxID, id);
-        printf("ID = %s\n", auxID);
+        //printf("ID = %s\n", auxID);
         //De aqui hasta el siguiente comentario es solo para adaptar el nombre del archivo y abrirlo
         strcpy(fileName, assignFileName(id, fileName));
-        printf("fileName = %s\n", fileName);
+        //printf("fileName = %s\n", fileName);
 
-        printf("ID = %s\n", auxID);
+        //printf("ID = %s\n", auxID);
         
         printf("Leyendo archivo: %s.txt\n", auxID);
         FILE * file = fopen(fileName, "r");
@@ -298,7 +300,7 @@ void loadBooks(TreeMap * bookCase)
         //----------------Hasta aqui-----------------
 
         char * title = skipToContent(file);
-        printf("Title = [%s]\n", title);
+        printf("Titulo del libro = [%s]\n", title);
 
         //printf("Creando Book * book\n");
         Book * book = createBook1(auxID, title);
@@ -322,23 +324,35 @@ void loadBooks(TreeMap * bookCase)
 
             //printf("Word = [%s]\n", word);
 
+            int bool = 0;
             NodeWF * auxWord;
 
-            //printf("\nBuscando si la palabra [%s] ya existe\n", word);
+            printf("\nBuscando si la palabra [%s] ya existe\n", word);
             PairTree * auxPair = searchTreeMap(book->wordsFrecuency, word);
             //printf("Despues de PairTree *\n");
-
-            if(auxPair == NULL)
+            if(auxPair != NULL)
             {
-                //printf("Palabra no encontrada, creando NodeWF *\n");
+                auxWord = auxPair->value;
+                lowerAndClean(auxWord->word);
+                printf("Comparing [%s] with [%s]\n", auxWord->word, word);
+                if(strcmp(auxWord->word, word) == 0) bool = 1;
+            }
+            printf("Bool = [%i]\n", bool);
+            if(bool == 0)
+            {
+                printf("Palabra no encontrada, creando NodeWF *\n");
 
                 auxWord = createNodeWF(word, pos, book);
+
                 book->uniqueWords++;
                 //printf("book->uniqueWords = [%i]\n", book->uniqueWords);
+
+                printf("Palabra recien creada = [%s]\n", auxWord->word);
             }
             else
             {
-                //printf("Palabra encontrada\n");
+                printf("Palabra encontrada\n");
+                printf("auxWord = [%s]\n", auxWord->word);
                 foundWord(auxPair->value, pos);
             }
             
@@ -349,10 +363,10 @@ void loadBooks(TreeMap * bookCase)
         }
         createBook2(file, book, wordCount);
 
-        printf("CharCount = [%i]\n", book->charCount);
-        printf("WordCount = [%i]\n", book->wordCount);
+        printf("Cantidad total de Caracteres = [%i]\n", book->charCount);
+        printf("Cantidad de palabras en el contenido = [%i]\n", book->wordCount);
 
-        printf("Insertando en el TreeMap\n");
+        //printf("Insertando en el TreeMap\n");
         insertTreeMap(bookCase, book->id, book);
 
         printf("Cerrando archivo\n");
@@ -384,6 +398,8 @@ void searchBookByTitle(TreeMap * bookCase)
     gets(bookTitle);
     stringToLower(bookTitle);
 
+    printf("Mostrando los libros que coinciden con la busqueda:\n");
+
     //dividir titulo en un arreglo de palabras
     char division[2] = " ";
 
@@ -391,19 +407,19 @@ void searchBookByTitle(TreeMap * bookCase)
     int nWordsRequired = 0;
     char * auxString1;
     auxString1 = strtok(bookTitle, division);
-    printf("Imprimiendo titulo buscado por partes\n");
+    //printf("Imprimiendo titulo buscado por partes\n");
     while(auxString1 != NULL)
     {
-        printf("%s\n" ,auxString1);
+        //printf("%s\n" ,auxString1);
         strcpy(wantedTitle[nWordsRequired], auxString1);
         nWordsRequired++;
         auxString1 = strtok(NULL, division);
     }
 
-    printf("nwords of the title = [%i]\n", nWordsRequired);
+    //printf("nwords of the title = [%i]\n", nWordsRequired);
     while(pairTree != NULL)
     {
-        printf("Revisando libro\n");
+        //printf("Revisando libro\n");
         Book * book = pairTree->value;
 
         //Dividiendo titulo del libro actual
@@ -412,16 +428,16 @@ void searchBookByTitle(TreeMap * bookCase)
         char * auxString2 = malloc(100);
         strcpy(auxString2, book->title);
         auxString2 = strtok(auxString2, division);
-        printf("Imprimiendo titulo actual por partes\n");
+        //printf("Imprimiendo titulo actual por partes\n");
         while(auxString2 != NULL)
         {
-            printf("%s\n" ,auxString2);
+            //printf("%s\n" ,auxString2);
             strcpy(currentTitle[nWordsTitle], auxString2);
             nWordsTitle++;
             auxString2 = strtok(NULL, division);
         }
         //se nececita un contador y la cantidad de palabras del titulo
-        printf("Num of words of title = [%i]\n", nWordsTitle);
+        //printf("Num of words of title = [%i]\n", nWordsTitle);
 
         //con un for, comparar cada palabra con cada palabra del titulo
         int matches = 0;
@@ -430,11 +446,11 @@ void searchBookByTitle(TreeMap * bookCase)
         {
             for(y = 0 ; y < nWordsTitle ; y++)
             {
-                printf("\nComparing [%s]\nwith      [%s]\n", wantedTitle[x], currentTitle[y]);
+                //printf("\nComparing [%s]\nwith      [%s]\n", wantedTitle[x], currentTitle[y]);
                 //si la palabra está en el titulo, se incrementa el contador
                 if(strcmp(wantedTitle[x], currentTitle[y]) == 0)
                 {
-                    printf("Match!\n");
+                    //printf("Match!\n");
                     matches++;
                 }
             }
@@ -443,7 +459,7 @@ void searchBookByTitle(TreeMap * bookCase)
         //Si el contador llegua a la cantidad del titulo, se muestra el libro
         if(matches >= nWordsRequired)
         {
-            printf("\nLibro encontrado = [%s]\n", book->title);
+            printf("\n[%s]\n", book->title);
         }
 
         //se pasa al siguiente libro
@@ -481,6 +497,24 @@ void showSortedBooks(TreeMap * bookCase)
     }
 }
 
+Book * searchOneBookByTitle(TreeMap * bookCase, char * title)
+{
+    PairTree * auxP = firstTreeMap(bookCase);
+    while(auxP)
+    {
+        Book * book = auxP->value;
+        printf("Comparing [%s] with [%s]\n", title, book->title);
+        if(strcmp(book->title, title) == 0)
+        {
+            printf("\nSe ha encontrado el libro.\n");
+            return book;
+        }
+        auxP = nextTreeMap(bookCase);
+    }
+    printf("\nNo se encontro el libro (Verifique las mayusculas)\n");
+    return NULL;
+}
+
 void showTop10Words(TreeMap * bookCase)
 {
     PairTree * auxP = firstTreeMap(bookCase);
@@ -490,32 +524,50 @@ void showTop10Words(TreeMap * bookCase)
         return;
     }
     char title[150];
-    printf("Ingrese el titulo del libro que desea revisar.\n");
-    getchar();
-    gets(title);
 
-    printf("Buscando el libro [%s]\n", title);
-    searchBookByTitle(bookCase);
-    Book * book = auxP->value;
+    Book * book = NULL;
+    getchar();
+    while(book == NULL)
+    {
+        printf("Ingrese el titulo del libro que desea revisar.\n");
+        gets(title);
+
+        printf("Buscando el libro [%s]\n", title);
+        book = searchOneBookByTitle(bookCase, title);
+    }
     printf("Revisando si hay palabras\n");
     auxP = firstTreeMap(book->wordsFrecuency);
+    NodeWF * actualWord;
     if(auxP == NULL)
     {
-        printf("Ocurrio un error al intentar conseguir las palabras.\n");
+        printf("No hay palabras en el arbol de frecuencias.\n");
         return;
     }
-    NodeWF * actualWord;
-    int i,j,k;
-    printf("uniqueWords = [%i]\n", book->uniqueWords);
-    printf("Mostrando las 10 palabras:\n");
-    for(i = 0 ; i < 10 ; i++)
+    int h,i,j,k;
+    //printf("uniqueWords = [%i]\n", book->uniqueWords);
+    if(book->uniqueWords < 10)
+    {
+        h = book->uniqueWords;
+    }
+    else
+    {
+        h = 10;
+    }
+    printf("Mostrando las %i palabras:\n", h);
+    for(i = 0 ; i < h ; i++)
     {
         printf("Palabra [%i]\n", i+1);
-        for(j = 0 ; j < book->uniqueWords ; j++)
+        for(j = 1 ; j <= book->uniqueWords ; j++)
         {
             printf("j = [%i]\n", j);
             k = book->uniqueWords-j;
             printf("k = [%i]\n", k);
+            auxP = firstTreeMap(book->wordsFrecuency);
+            if(auxP != NULL)
+            {
+                actualWord = auxP->value;
+                printf("Actual word = [%s]\n", actualWord->word);
+            }
             while(k > 0)
             {
                 printf("Buscando la palabra en posicion [%i]\n", k);
@@ -523,7 +575,7 @@ void showTop10Words(TreeMap * bookCase)
                 if(auxP == NULL)
                 {
                     printf("Ocurrio un error al intentar conseguir la palabra\n");
-                    return;
+                    break;
                 }
                 k--;
             }
@@ -531,7 +583,6 @@ void showTop10Words(TreeMap * bookCase)
             printf("Word = [%s]\nAmmount = [%i]\n", actualWord->word, actualWord->count);
             auxP = nextTreeMap(book->wordsFrecuency);
         }
-        auxP = firstTreeMap(book->wordsFrecuency);
     }
 }
 
