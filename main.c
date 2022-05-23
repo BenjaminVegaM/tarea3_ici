@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include "list.h"
 #include "treemap.h"
 
@@ -556,17 +557,17 @@ void showTop10Words(TreeMap * bookCase)
 
     Book * book;
     getchar();
-    
+
     do
     {
-        book = auxP->value;
-        printf("Ingrese el titulo del libro que desea revisar.\n");
+        printf("Ingrese el ID del libro que desea revisar.\n");
         gets(id);
-
-        printf("Buscando el libro de ID: [%s]\n", id);
+        //printf("Buscando el libro de ID: [%s]\n", id);
         auxP = searchTreeMap(bookCase, id);
     } while(auxP == NULL);
 
+    //printf("Libro encontrado\n");
+    book = auxP->value;
     //printf("Revisando si hay palabras\n");
     auxP = firstTreeMap(book->wordsFrecuency);
     NodeWF * actualWord;
@@ -598,7 +599,6 @@ void showTop10Words(TreeMap * bookCase)
         
         //Recorrer las palabras
         auxP = firstTreeMap(book->wordsFrecuency);
-        actualWord = auxP->value;
         //printf("First = [%s]\n", actualWord->word);
 
         for(k = 0 ; k < i ; k++)
@@ -624,7 +624,7 @@ void showTop10Words(TreeMap * bookCase)
 }
 
 void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
-{/*
+{
     PairTree * auxP = firstTreeMap(bookCase);
     if(auxP == NULL)
     {
@@ -651,6 +651,7 @@ void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
         printf("No hay palabras en el arbol.\n");
         return;
     }
+
     int h,i,k;
     //printf("uniqueWords = [%i]\n", book->uniqueWords);
     if(book->uniqueWords < 10)
@@ -661,6 +662,7 @@ void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
     {
         h = 10;
     }
+
     printf("Mostrando las %i palabras:\n", h);
     //Para la posicion [i]
     for(i = 0 ; i < h ; i++)
@@ -669,7 +671,6 @@ void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
         
         //Recorrer las palabras
         auxP = firstTreeMap(book->wordsFrecuency);
-        actualWord = auxP->value;
         //printf("First = [%s]\n", actualWord->word);
         //TreeMap * relevancyMap = createTreeMap(lower_than_float);
         for(k = 0 ; k < i ; k++)
@@ -687,13 +688,30 @@ void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
         }
 
         actualWord = auxP->value;
+
+        //Calculate the ammount of docs that have the word
+        float docsThatHaveWord = 0;
+        PairTree * auxPairT;
+        Book * auxBook;
+        for(int cont = 0 ; cont < ammountOfDocs ; cont++)
+        {
+            auxPairT = searchTreeMap(bookCase, book->id);
+            if(auxPairT != NULL) break;
+            auxBook = auxPairT->value;
+            auxPairT = searchTreeMap(auxBook->wordsFrecuency, actualWord->word);
+        }
+
         float veces = actualWord->count;
         float total = book->wordCount;
         float frecuencia = veces/total;
         float docs = ammountOfDocs;
-        float relevancy = frecuencia*log(1);
+        float relevancy = frecuencia*log(docs/docsThatHaveWord);
+        if(relevancy == INFINITY)
+        {
+            relevancy = 0;
+        }
         printf("> Palabra = [%s]\n  Relevancia = [%f]\n\n", actualWord->word, relevancy);
-    }*/
+    }
 }
 
 int main()
