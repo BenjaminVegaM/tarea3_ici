@@ -27,32 +27,24 @@ typedef struct{
 } Position;
 
 //Función para comparar claves de tipo string, retorna 1 si son iguales
-//Viene de Map.h
 int is_equal_string(void * key1, void * key2) {
     if(strcmp((char*)key1, (char*)key2)==0) return 1;
     return 0;
 }
-long long stringHash(const void * key) {
-    long long hash = 5381;
-    const char * ptr;
-    for (ptr = key; *ptr != '\0'; ptr++) {
-        hash = ((hash << 5) + hash) + tolower(*ptr); /* hash * 33 + c */
-    }    
-    return hash; 
-}
-int stringEqual(const void * key1, const void * key2) {
-    const char * A = key1;
-    const char * B = key2;
-    return strcmp(A, B) == 0;
-}
-//-------------
-
 
 //Viene de TreeMap.h
 int lower_than_string(void* key1, void* key2){
     char* k1=(char*) key1;
     char* k2=(char*) key2;
     if(strcmp(k1,k2)<0) return 1;
+    return 0;
+}
+
+int lower_than_float(void* key1, void* key2)
+{
+    float * k1 = (float*) key1;
+    float * k2 = (float*) key2;
+    if(k1 < k2) return 1;
     return 0;
 }
 
@@ -272,7 +264,7 @@ void foundWord(NodeWF * auxWord, Position * pos)
 }
 
 //Funcion principal de cargar los .txt
-void loadBooks(TreeMap * bookCase)
+void loadBooks(TreeMap * bookCase, int ammountOfDocs)
 {
     printf("-----<Ingrese el ID del archivo que desea importar o 'end' para detenerse>-----\n");
     char auxID[15];
@@ -298,6 +290,7 @@ void loadBooks(TreeMap * bookCase)
             continue;
         }
         //----------------Hasta aqui-----------------
+        ammountOfDocs++;
 
         char * title = skipToContent(file);
         printf("Titulo del libro = [%s]\n", title);
@@ -384,6 +377,7 @@ void loadBooks(TreeMap * bookCase)
         printf("-----<Ingrese el ID del siguiente archivo o 'end' para detenerse>-----\n");
     }while(is_equal_string(auxID, "end") == 0);
     printf("Finalizando de leer, volviendo al menu.\n");
+    return ammountOfDocs;
 }
 
 void searchBookByTitle(TreeMap * bookCase)
@@ -533,16 +527,16 @@ void showTop10Words(TreeMap * bookCase)
         printf("Buscando el libro [%s]\n", title);
         book = searchOneBookByTitle(bookCase, title);
     }
-    printf("Revisando si hay palabras\n");
+    //printf("Revisando si hay palabras\n");
     auxP = firstTreeMap(book->wordsFrecuency);
     NodeWF * actualWord;
     if(auxP == NULL)
     {
-        printf("No hay palabras en el arbol de frecuencias.\n");
+        printf("No hay palabras en el arbol.\n");
         return;
     }
     int h,i,k;
-    printf("uniqueWords = [%i]\n", book->uniqueWords);
+    //printf("uniqueWords = [%i]\n", book->uniqueWords);
     if(book->uniqueWords < 10)
     {
         h = book->uniqueWords;
@@ -589,9 +583,77 @@ void showTop10Words(TreeMap * bookCase)
     }
 }
 
-void showRelevantWords(TreeMap * bookCase)
+void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
 {
+    PairTree * auxP = firstTreeMap(bookCase);
+    if(auxP == NULL)
+    {
+        printf("No hay libros aun.\n");
+        return;
+    }
+    char title[150];
 
+    Book * book = NULL;
+    getchar();
+    while(book == NULL)
+    {
+        printf("Ingrese el titulo del libro que desea revisar.\n");
+        gets(title);
+
+        printf("Buscando el libro [%s]\n", title);
+        book = searchOneBookByTitle(bookCase, title);
+    }
+    //printf("Revisando si hay palabras\n");
+    auxP = firstTreeMap(book->wordsFrecuency);
+    NodeWF * actualWord;
+    if(auxP == NULL)
+    {
+        printf("No hay palabras en el arbol.\n");
+        return;
+    }
+    int h,i,k;
+    //printf("uniqueWords = [%i]\n", book->uniqueWords);
+    if(book->uniqueWords < 10)
+    {
+        h = book->uniqueWords;
+    }
+    else
+    {
+        h = 10;
+    }
+    printf("Mostrando las %i palabras:\n", h);
+    //Para la posicion [i]
+    for(i = 0 ; i < h ; i++)
+    {
+        printf("Palabra en %i lugar.\n", i+1);
+        
+        //Recorrer las palabras
+        auxP = firstTreeMap(book->wordsFrecuency);
+        actualWord = auxP->value;
+        //printf("First = [%s]\n", actualWord->word);
+        //TreeMap * relevancyMap = createTreeMap(lower_than_float);
+        for(k = 0 ; k < i ; k++)
+        {
+            //printf("k = [%i]\n", k);
+            //printf("En la palabra del mapa [%i]\n",k);
+            auxP = nextTreeMap(book->wordsFrecuency);
+            if(auxP == NULL)
+            {
+                printf("Ocurrio un error al intentar conseguir la palabra\n");
+                return;
+            }
+            actualWord = auxP->value;
+            //printf("Word = [%s]\n", actualWord->word);
+        }
+
+        actualWord = auxP->value;
+        float veces = actualWord->count;
+        float total = book->wordCount;
+        float frecuencia = veces/total;
+        float docs = ammountOfDocs;
+        float relevancy = frecuencia*log()
+        printf("> Palabra = [%s]\n  Relevancia = [%f]\n\n", actualWord->word, relevancy);
+    }
 }
 
 int main()
@@ -599,6 +661,8 @@ int main()
     int op = 0;
     printf("Creando Map * bookCase\n");
     TreeMap * bookCase = createTreeMap(lower_than_string); //Key = id
+
+    int ammountOfDocs = 0;
 
     printf("INICIO\n");
     while(op!=8)
@@ -625,7 +689,7 @@ int main()
                 /*Cargar documentos. El usuario coloca los nombres de una lista
                 de archivos txt separados por espacio y la aplicación los carga.*/
                 printf("Cargando documentos\n");
-                loadBooks(bookCase);
+                ammountOfDocs = loadBooks(bookCase, ammountOfDocs);
                 break;
             }
             case 2:
@@ -660,7 +724,7 @@ int main()
                 /*Palabras más relevantes.  El usuario ingresa el ***TÍTULO*** de un
                 libro y la aplicación muestra las 10 palabras más relevantes
                 de este.*/
-                showRelevantWords(bookCase);
+                showRelevantWords(bookCase, ammountOfDocs);
                 break;
             }
             case 6:
