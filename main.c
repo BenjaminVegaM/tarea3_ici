@@ -651,7 +651,7 @@ void showRelevantWords(TreeMap * bookCase, int ammountOfDocs)
         float total = book->wordCount;
         float frecuencia = veces/total;
         float docs = ammountOfDocs;
-        float relevancy = frecuencia*log()
+        float relevancy = frecuencia*log(1);
         printf("> Palabra = [%s]\n  Relevancia = [%f]\n\n", actualWord->word, relevancy);
     }
 }
