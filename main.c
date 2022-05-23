@@ -234,7 +234,7 @@ NodeWF * createNodeWF(char * word, Position * pos, Book * book)
 
         //printf("Insertando palabra al mapa\n");
         insertTreeMap(book->wordsFrecuency, word, auxWord);
-        printf("Palabra [%s] insertada en el mapa\n", auxWord->word);
+        //printf("Palabra [%s] insertada en el mapa\n", auxWord->word);
 
         //printf("\nPalabra %s creada\n", auxWord->word);
         
@@ -329,32 +329,32 @@ void loadBooks(TreeMap * bookCase)
             int bool = 0;
             NodeWF * auxWord;
 
-            printf("\nBuscando si la palabra [%s] ya existe\n", word);
+            //printf("\nBuscando si la palabra [%s] ya existe\n", word);
             PairTree * auxPair = searchTreeMap(book->wordsFrecuency, word);
             //printf("Despues de PairTree *\n");
             if(auxPair != NULL)
             {
                 auxWord = auxPair->value;
                 lowerAndClean(auxWord->word);
-                printf("Comparing [%s] with [%s]\n", auxWord->word, word);
+                //printf("Comparing [%s] with [%s]\n", auxWord->word, word);
                 if(strcmp(auxWord->word, word) == 0) bool = 1;
             }
-            printf("Bool = [%i]\n", bool);
+            //printf("Bool = [%i]\n", bool);
             if(bool == 0)
             {
-                printf("Palabra no encontrada, creando NodeWF *\n");
+                //printf("Palabra no encontrada, creando NodeWF *\n");
 
                 auxWord = createNodeWF(word, pos, book);
 
                 book->uniqueWords++;
                 //printf("book->uniqueWords = [%i]\n", book->uniqueWords);
 
-                printf("Palabra recien creada = [%s]\n", auxWord->word);
+                //printf("Palabra recien creada = [%s]\n", auxWord->word);
             }
             else
             {
-                printf("Palabra encontrada\n");
-                printf("auxWord = [%s]\n", auxWord->word);
+                //printf("Palabra encontrada\n");
+                //printf("auxWord = [%s]\n", auxWord->word);
                 foundWord(auxPair->value, pos);
             }
             
@@ -473,30 +473,26 @@ void showSortedBooks(TreeMap * bookCase)
 {
     printf("Searching for the first book\n");
     
-    PairTree * pairTree = firstTreeMap(bookCase);
-    if(pairTree == NULL)
+    PairTree * auxP = firstTreeMap(bookCase);
+    if(auxP == NULL)
     {
-        printf("No se ha encontrado ningun libro\n");
+        printf("No hay libros aun.\n");
         return;
     }
-    Book * currentBook = pairTree->value;
 
-    if(currentBook == NULL)
-    {
-        printf("No hay libros aún.\n");
-        return;
-    }
+    Book * currentBook;
 
     printf("Mostrando todos los libros.");
-
-    while(currentBook)
+    while(auxP)
     {
-        printf("%s", currentBook->title);
-        printf("%s", currentBook->id);
-        printf("%i", currentBook->charCount);
-        printf("%i", currentBook->wordCount);
-        currentBook = nextTreeMap(bookCase)->value;
+        currentBook = auxP->value;
+        printf("Titulo: %s\n", currentBook->title);
+        printf("Id: %s\n", currentBook->id);
+        printf("Cantidad total de Caracteres: %i\n", currentBook->charCount);
+        printf("Cantidad de palabras en el contenido: %i\n", currentBook->wordCount);
+        auxP = nextTreeMap(bookCase);
     }
+    printf("fin.\n");
 }
 
 Book * searchOneBookByTitle(TreeMap * bookCase, char * title)
@@ -545,7 +541,7 @@ void showTop10Words(TreeMap * bookCase)
         printf("No hay palabras en el arbol de frecuencias.\n");
         return;
     }
-    int h,i,j,k;
+    int h,i,k;
     printf("uniqueWords = [%i]\n", book->uniqueWords);
     if(book->uniqueWords < 10)
     {
@@ -560,34 +556,42 @@ void showTop10Words(TreeMap * bookCase)
     for(i = 0 ; i < h ; i++)
     {
         printf("Palabra en %i lugar.\n", i+1);
-        //Recorrer todas las palabras
-        for(j = 1 ; j <= book->uniqueWords ; j++)
-        {
-            printf("j = [%i]\n", j);
-            k = book->uniqueWords-j;
-            printf("k = [%i]\n", k);
+        
+        //printf("j = [%i]\n", j);
+        //k = book->uniqueWords-i-1;
 
-            //printf("Buscando la palabra en posicion [%i]\n", k);
-            
-            auxP = firstTreeMap(book->wordsFrecuency);
-            while(k > 0)
-            {
-                auxP = nextTreeMap(book->wordsFrecuency);
-                if(auxP == NULL)
-                {
-                    printf("Ocurrio un error al intentar conseguir la palabra\n");
-                    return;
-                }
-                actualWord = auxP->value;
-                printf("Word = [%s]\nAmmount = [%i]\n", actualWord->word, actualWord->count);
-
-                k--;
-            }
-            auxP = nextTreeMap(book->wordsFrecuency);
-        }
+        //printf("Buscando la palabra en posicion [%i]\n", k);
+        
+        //Recorrer las palabras
+        auxP = firstTreeMap(book->wordsFrecuency);
         actualWord = auxP->value;
-        printf(">>> Palabra = [%s]\n    Veces = [%i]\n", actualWord->word, actualWord->count);
+        //printf("First = [%s]\n", actualWord->word);
+
+        for(k = 0 ; k < i ; k++)
+        {
+            //printf("k = [%i]\n", k);
+            //printf("En la palabra del mapa [%i]\n",k);
+            auxP = nextTreeMap(book->wordsFrecuency);
+            if(auxP == NULL)
+            {
+                printf("Ocurrio un error al intentar conseguir la palabra\n");
+                return;
+            }
+            actualWord = auxP->value;
+            //printf("Word = [%s]\n", actualWord->word);
+        }
+
+        actualWord = auxP->value;
+        float veces = actualWord->count;
+        float total = book->wordCount;
+        float frecuencia = veces/total;
+        printf("> Palabra = [%s]\n  Veces = [%i]\n  Frecuencia = [%f]\n\n", actualWord->word, actualWord->count, frecuencia);
     }
+}
+
+void showRelevantWords(TreeMap * bookCase)
+{
+
 }
 
 int main()
@@ -648,6 +652,7 @@ int main()
                 cada una de ellas). (La frecuencia se calcula como la cantidad
                 de veces que aparece una palabra dividida por el total de
                 palabras en el libro.)*/
+                showTop10Words(bookCase);
                 break;
             }
             case 5:
@@ -655,7 +660,7 @@ int main()
                 /*Palabras más relevantes.  El usuario ingresa el ***TÍTULO*** de un
                 libro y la aplicación muestra las 10 palabras más relevantes
                 de este.*/
-                showTop10Words(bookCase);
+                showRelevantWords(bookCase);
                 break;
             }
             case 6:

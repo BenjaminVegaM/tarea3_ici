@@ -6,16 +6,16 @@
 1. Para compilar la tarea abrir en Visual Studio Code, abrir una nueva terminal en main.c y escribir "gcc main.c list.c treemap.c -o main" (sin las comillas), luego para correr el programa escribir "./main".
 
 2. Opciones que funcionan:
-   - 1.- 
-   - 2.- 
-   - 3.- 
-   - 4.- 
-   - 5.- 
-   - 6.- 
-   - 7.- 
-   - 8.- 
+   - 1.- Cargar documentos
+   - 2.- Mostrar documentos ordenados
+   - 3.- Buscar un libro por titulo
+   - 4.- Palabras con mayor frecuencia en un libro
+   - 8.- Salir
 
    Opciones que NO funcionan:
+   - 5.- Palabras mas relevantes de un libro
+   - 6.- Buscar por palabra
+   - 7.- Mostrar palabra en su contexto dentro del libro
 
 3. Sigo trabajando individual (aunque ya estoy conociendo a algunos compañeros) más que nada porque los grupos ya están formados.
 
